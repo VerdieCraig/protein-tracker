@@ -1,6 +1,6 @@
 # 🥗 Protein Tracker
 
-A simple, elegant mobile app for tracking daily protein and calorie intake. Built with React Native and Expo, featuring offline-first architecture with local SQLite storage. (This build is for Android.)
+A simple, elegant Android mobile app for tracking daily protein and calorie intake. Built with React Native and Expo, featuring offline-first architecture with local SQLite storage.
 
 ## ✨ Features
 
@@ -21,7 +21,7 @@ A simple, elegant mobile app for tracking daily protein and calorie intake. Buil
 ## 🚀 Try it Out
 
 ### Download APK
-[Download the latest APK](YOUR_EAS_BUILD_LINK_HERE)
+[Download the latest APK](https://expo.dev/accounts/robotkitty/projects/protein-tracker/builds/6662a933-45c5-4522-af08-e7b10d8abd3b)
 
 ### Run Locally
 ```bash
@@ -132,8 +132,8 @@ This project is [MIT](LICENSE) licensed.
 
 **Verdie Craig**
 - GitHub: [@VerdieCraig](https://github.com/VerdieCraig)
-- LinkedIn: [Your Name](https://linkedin.com/in/verdie-craig)
-- Portfolio: [yourwebsite.com](https://verdie-craig-portfolio.onrender.com/)
+- LinkedIn: [Verdie Craig](https://linkedin.com/in/verdie-craig)
+- Portfolio: [https://verdie-craig-portfolio.onrender.com/](https://verdie-craig-portfolio.onrender.com/)
 
 ## 🙏 Acknowledgments
 
