@@ -1,6 +1,6 @@
 # 🥗 Protein Tracker
 
-A simple, elegant mobile app for tracking daily protein and calorie intake. Built with React Native and Expo, featuring offline-first architecture with local SQLite storage.
+A simple, elegant mobile app for tracking daily protein and calorie intake. Built with React Native and Expo, featuring offline-first architecture with local SQLite storage. (This build is for Android.)
 
 ## ✨ Features
 
@@ -14,11 +14,9 @@ A simple, elegant mobile app for tracking daily protein and calorie intake. Buil
 
 ## 📱 Screenshots
 
-```
 | Today View | History | Settings |
 |------------|---------|----------|
 | ![Today](screenshots/today.jpg) | ![History](screenshots/history.jpg) | ![Settings](screenshots/settings.jpg) |
-```
 
 ## 🚀 Try it Out
 
@@ -111,7 +109,7 @@ eas build --platform android --profile preview
 eas build --platform android --profile production
 ```
 
-### Future Enhancements
+<!-- ### Future Enhancements
 
 - [ ] Add meal categories (breakfast, lunch, dinner, snacks)
 - [ ] Export data to CSV
@@ -121,7 +119,7 @@ eas build --platform android --profile production
 - [ ] Macro breakdown (carbs, fats, protein percentages)
 - [ ] Photo attachments for meals
 - [ ] Cloud sync across devices
-
+ -->
 ## 🤝 Contributing
 
 Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/VerdieCraig/protein-tracker/issues).
@@ -132,10 +130,10 @@ This project is [MIT](LICENSE) licensed.
 
 ## 👤 Author
 
-**Your Name**
-- GitHub: [@YOUR_USERNAME](https://github.com/YOUR_USERNAME)
-- LinkedIn: [Your Name](https://linkedin.com/in/YOUR_PROFILE)
-- Portfolio: [yourwebsite.com](https://yourwebsite.com)
+**Verdie Craig**
+- GitHub: [@VerdieCraig](https://github.com/VerdieCraig)
+- LinkedIn: [Your Name](https://linkedin.com/in/verdie-craig)
+- Portfolio: [yourwebsite.com](https://verdie-craig-portfolio.onrender.com/)
 
 ## 🙏 Acknowledgments
 
