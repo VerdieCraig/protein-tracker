@@ -21,7 +21,7 @@ A simple, elegant Android mobile app for tracking daily protein and calorie inta
 ## 🚀 Try it Out
 
 ### Download APK
-[Download the latest APK](https://expo.dev/accounts/robotkitty/projects/protein-tracker/builds/6662a933-45c5-4522-af08-e7b10d8abd3b)
+[Download the latest APK](application-6662a933-45c5-4522-af08-e7b10d8abd3b.apk)
 
 ### Run Locally
 ```bash
