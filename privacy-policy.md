@@ -69,8 +69,8 @@ Since we do not collect any personal data, there is no data for us to access, mo
 If you have any questions about this Privacy Policy or the App, please contact us at:
 
 **Email:** contact@darklotus.dev  
-**Developer:** Dark Lotus Dev  
-**GitHub:** https://github.com/VerdieCraig/protein-tracker
+**Website:** https://darklotus.dev  
+**Developer:** Dark Lotus Dev
 
 ## Consent
 

@@ -3,8 +3,22 @@
 
 @import "{{ site.theme }}";
 
-// Hide the GitHub footer
-.site-footer {
+/// Aggressively hide ALL possible footer elements
+.site-footer,
+footer,
+.page-footer,
+#footer,
+[class*="footer"] {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+
+// Also hide the "This site is open source" text specifically
+a[href*="github.com"][href*="/edit/"],
+a[href*="Improve this page"] {
   display: none !important;
 }
 
