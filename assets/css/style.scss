@@ -5,82 +5,92 @@
 
 // Hide the GitHub footer
 .site-footer {
-  display: none;
+  display: none !important;
 }
 
-// Style the content to match your app
-.main-content {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  font-size: 15px;
-  line-height: 1.6;
-  color: #e5e7eb;
-  background-color: #0f1530;
-  padding: 16px;
+// Override the page container and body
+body {
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
 }
 
-// Headers
-.main-content h1 {
-  font-size: 22px;
-  font-weight: 700;
-  color: #ffffff;
-  margin-bottom: 12px;
-  margin-top: 20px;
+// Target the main content container (different themes use different classes)
+.main-content,
+.page-content,
+.wrapper,
+#main-content {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  font-size: 15px !important;
+  line-height: 1.6 !important;
+  color: #1f2937 !important;
+  background-color: #ffffff !important;
+  max-width: 100% !important;
+  padding: 16px !important;
 }
 
-.main-content h2 {
-  font-size: 17px;
-  font-weight: 600;
-  color: #dde3ff;
-  margin-bottom: 8px;
-  margin-top: 16px;
+// Headers - make them more app-like
+h1 {
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  color: #111827 !important;
+  margin-bottom: 12px !important;
+  margin-top: 20px !important;
+  border-bottom: none !important;
 }
 
-.main-content h3 {
-  font-size: 16px;
-  font-weight: 600;
-  color: #dde3ff;
-  margin-bottom: 6px;
-  margin-top: 12px;
+h2 {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  color: #1f2937 !important;
+  margin-bottom: 8px !important;
+  margin-top: 16px !important;
+  border-bottom: none !important;
+}
+
+h3 {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: #374151 !important;
+  margin-bottom: 6px !important;
+  margin-top: 12px !important;
 }
 
 // Paragraphs and lists
-.main-content p,
-.main-content ul,
-.main-content ol {
-  font-size: 15px;
-  color: #d1d5db;
-  margin-bottom: 12px;
+p, ul, ol {
+  font-size: 15px !important;
+  color: #374151 !important;
+  margin-bottom: 12px !important;
+  line-height: 1.6 !important;
 }
 
-.main-content li {
-  margin-bottom: 6px;
+li {
+  margin-bottom: 6px !important;
+  font-size: 15px !important;
 }
 
 // Links
-.main-content a {
-  color: #5b7cff;
-  text-decoration: none;
+a {
+  color: #5b7cff !important;
+  text-decoration: none !important;
 }
 
-.main-content a:hover {
-  text-decoration: underline;
+a:hover {
+  text-decoration: underline !important;
 }
 
 // Strong/bold text
-.main-content strong {
-  color: #ffffff;
-  font-weight: 600;
+strong {
+  color: #111827 !important;
+  font-weight: 600 !important;
 }
 
-// Code blocks (if any)
-.main-content code {
-  background-color: #161d3a;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 14px;
+// Remove any default padding/margins from containers
+.container {
+  max-width: 100% !important;
+  padding: 0 !important;
 }
 
-// Overall page background
-body {
-  background-color: #0f1530;
+// Hide page header if it exists
+.page-header {
+  display: none !important;
 }
