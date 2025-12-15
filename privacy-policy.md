@@ -1,7 +1,7 @@
 # Privacy Policy for Protein Tracker
 
 **Effective Date:** November 20, 2025  
-**Last Updated:** November 20, 2025
+**Last Updated:** December 14, 2025
 
 ## Overview
 
