@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { WebView } from "react-native-webview";
 
 /**
  * Simple Daily Protein Tracker with Edit Functionality
@@ -377,7 +378,7 @@ function HistoryScreen() {
   );
 }
 
-function SettingsScreen() {
+function SettingsScreen({ onNavigate }) {  // Added onNavigate prop
   const [goal, setGoal] = useState("120");
 
   useEffect(() => {
@@ -448,6 +449,37 @@ function SettingsScreen() {
           onPress={clearAll}
         />
       </Card>
+
+      <Card style={{ marginTop: 12 }}>
+        <Text style={styles.sectionTitle}>Legal</Text>
+        <Button
+          title="Privacy Policy"
+          onPress={() => onNavigate("privacy")}
+        />
+        <Button
+          title="Terms of Service"
+          onPress={() => onNavigate("terms")}
+        />
+      </Card>
+    </View>
+  );
+}
+
+// WebView Screen Component
+function WebViewScreen({ url, title }) {
+  return (
+    <View style={{ flex: 1, backgroundColor: "#0f1530" }}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>{title}</Text>
+      </View>
+      <WebView
+        source={{ uri: url }}
+        style={{ flex: 1, backgroundColor: "#0f1530" }}
+        // These props make it look better with markdown
+        contentMode="mobile"
+        scalesPageToFit={true}
+        startInLoadingState={true}
+      />
     </View>
   );
 }
@@ -458,29 +490,54 @@ function App() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#0b1020" }}>
-      <View style={styles.tabbar}>
-        {["today", "history", "settings"].map((t) => (
-          <Pressable
-            key={t}
-            onPress={() => setTab(t)}
-            style={[styles.tab, tab === t && styles.tabActive]}
-          >
-            <Text style={[styles.tabTxt, tab === t && styles.tabTxtActive]}>
-              {t === "today"
-                ? "Today"
-                : t === "history"
-                ? "History"
-                : "Settings"}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+      {/* Only show tabbar on main tabs, not on legal pages */}
+      {!["privacy", "terms"].includes(tab) && (
+        <View style={styles.tabbar}>
+          {["today", "history", "settings"].map((t) => (
+            <Pressable
+              key={t}
+              onPress={() => setTab(t)}
+              style={[styles.tab, tab === t && styles.tabActive]}
+            >
+              <Text style={[styles.tabTxt, tab === t && styles.tabTxtActive]}>
+                {t === "today"
+                  ? "Today"
+                  : t === "history"
+                  ? "History"
+                  : "Settings"}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
 
       <View style={{ flex: 1, backgroundColor: "#0f1530" }}>
         {tab === "today" && <TodayScreen />}
         {tab === "history" && <HistoryScreen />}
-        {tab === "settings" && <SettingsScreen />}
+        {tab === "settings" && <SettingsScreen onNavigate={setTab} />}
+        {tab === "privacy" && (
+          <WebViewScreen
+            url="https://verdiecraig.github.io/protein-tracker/privacy-policy"
+            title="Privacy Policy"
+          />
+        )}
+        {tab === "terms" && (
+          <WebViewScreen
+            url="https://verdiecraig.github.io/protein-tracker/terms-of-service"
+            title="Terms of Service"
+          />
+        )}
       </View>
+
+      {/* Back button for legal pages */}
+      {["privacy", "terms"].includes(tab) && (
+        <Pressable
+          style={styles.backButton}
+          onPress={() => setTab("settings")}
+        >
+          <Text style={styles.backButtonText}>← Back to Settings</Text>
+        </Pressable>
+      )}
     </SafeAreaView>
   );
 }
@@ -581,4 +638,29 @@ const styles = StyleSheet.create({
   tabActive: { backgroundColor: "#161d3a" },
   tabTxt: { color: "#98a3d4", fontWeight: "700" },
   tabTxtActive: { color: "#fff" },
+  header: {
+    backgroundColor: "#0b1020",
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#1f2937",
+  },
+  headerTitle: {
+    color: "#f9fafb",
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  backButton: {
+    backgroundColor: "#1f2937",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#374151",
+  },
+  backButtonText: {
+    color: "#3b82f6",
+    fontSize: 16,
+    fontWeight: "500",
+    textAlign: "center",
+  },
 });

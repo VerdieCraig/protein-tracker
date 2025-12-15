@@ -1,0 +1,86 @@
+---
+---
+
+@import "{{ site.theme }}";
+
+// Hide the GitHub footer
+.site-footer {
+  display: none;
+}
+
+// Style the content to match your app
+.main-content {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #e5e7eb;
+  background-color: #0f1530;
+  padding: 16px;
+}
+
+// Headers
+.main-content h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 12px;
+  margin-top: 20px;
+}
+
+.main-content h2 {
+  font-size: 17px;
+  font-weight: 600;
+  color: #dde3ff;
+  margin-bottom: 8px;
+  margin-top: 16px;
+}
+
+.main-content h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #dde3ff;
+  margin-bottom: 6px;
+  margin-top: 12px;
+}
+
+// Paragraphs and lists
+.main-content p,
+.main-content ul,
+.main-content ol {
+  font-size: 15px;
+  color: #d1d5db;
+  margin-bottom: 12px;
+}
+
+.main-content li {
+  margin-bottom: 6px;
+}
+
+// Links
+.main-content a {
+  color: #5b7cff;
+  text-decoration: none;
+}
+
+.main-content a:hover {
+  text-decoration: underline;
+}
+
+// Strong/bold text
+.main-content strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+// Code blocks (if any)
+.main-content code {
+  background-color: #161d3a;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+// Overall page background
+body {
+  background-color: #0f1530;
+}
