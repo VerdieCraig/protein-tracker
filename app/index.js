@@ -105,6 +105,40 @@ async function runMigrations() {
     WHERE NOT EXISTS (SELECT 1 FROM settings WHERE id = 1);
   `);
 }
+// --- Onboarding Setup ---
+async function getOnboardingStatus() {
+  const database = await getDatabase();
+  
+  // Check if onboarding table exists, create if not
+  await database.execAsync(`
+    CREATE TABLE IF NOT EXISTS onboarding (
+      id INTEGER PRIMARY KEY NOT NULL,
+      completed INTEGER NOT NULL DEFAULT 0
+    );
+  `);
+  
+  // Check if onboarding is completed
+  const result = await database.getFirstAsync(
+    "SELECT completed FROM onboarding WHERE id = 1;"
+  );
+  
+  // If no record exists, insert default
+  if (!result) {
+    await database.runAsync(
+      "INSERT INTO onboarding (id, completed) VALUES (1, 0);"
+    );
+    return false;
+  }
+  
+  return result.completed === 1;
+}
+
+async function setOnboardingCompleted() {
+  const database = await getDatabase();
+  await database.runAsync(
+    "INSERT OR REPLACE INTO onboarding (id, completed) VALUES (1, 1);"
+  );
+}
 
 const todayStr = () => {
   const d = new Date();
@@ -566,12 +600,129 @@ function WebViewScreen({ url, title, colors }) {
     </View>
   );
 }
+// --- Onboarding Component ---
+function OnboardingModal({ onComplete, colors }) {
+  const [currentScreen, setCurrentScreen] = useState(0);
+
+  const screens = [
+    {
+      title: "Welcome to Protein Tracker",
+      description: "Track your daily protein intake easily and reach your fitness goals.",          
+    },
+    {
+      title: "Log Your Meals",
+      description: "Add entries throughout the day with protein and calorie counts. Quick and simple.",    
+    },
+    {
+      title: "Track Your Progress",
+      description: "Monitor your daily goals and view your history over the past 30 days.",      
+    },
+  ];
+
+  const isLastScreen = currentScreen === screens.length - 1;
+
+  return (
+    <View style={[styles.onboardingOverlay, { backgroundColor: 'rgba(0, 0, 0, 0.85)' }]}>
+      <View style={[styles.onboardingModal, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+        {/* Skip button */}
+        {!isLastScreen && (
+          <Pressable 
+            style={styles.skipButton}
+            onPress={onComplete}
+          >
+            <Text style={[styles.skipText, { color: colors.textSecondary }]}>Skip</Text>
+          </Pressable>
+        )}
+
+        {/* Content */}
+        <View style={styles.onboardingContent}>
+          <Text style={styles.onboardingEmoji}>{screens[currentScreen].emoji}</Text>
+          <Text style={[styles.onboardingTitle, { color: colors.text }]}>
+            {screens[currentScreen].title}
+          </Text>
+          <Text style={[styles.onboardingDescription, { color: colors.textSecondary }]}>
+            {screens[currentScreen].description}
+          </Text>
+        </View>
+
+        {/* Progress dots */}
+        <View style={styles.dotsContainer}>
+          {screens.map((_, index) => (
+            <View
+              key={index}
+              style={[
+                styles.dot,
+                {
+                  backgroundColor: index === currentScreen ? colors.primary : colors.surfaceBorder,
+                },
+              ]}
+            />
+          ))}
+        </View>
+
+        {/* Navigation buttons */}
+        <View style={styles.onboardingButtons}>
+          {currentScreen > 0 && (
+            <Pressable
+              style={[styles.navButton, { borderColor: colors.surfaceBorder }]}
+              onPress={() => setCurrentScreen(currentScreen - 1)}
+            >
+              <Text style={[styles.navButtonText, { color: colors.textSecondary }]}>Back</Text>
+            </Pressable>
+          )}
+          
+          <Pressable
+            style={[
+              styles.navButton,
+              styles.primaryButton,
+              { backgroundColor: colors.primary },
+              currentScreen === 0 && { flex: 1 }
+            ]}
+            onPress={() => {
+              if (isLastScreen) {
+                onComplete();
+              } else {
+                setCurrentScreen(currentScreen + 1);
+              }
+            }}
+          >
+            <Text style={[styles.navButtonText, { color: colors.primaryText }]}>
+              {isLastScreen ? "Get Started" : "Next"}
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+    </View>
+  );
+}
 
 // --- App UI ---
 function App() {
   const [tab, setTab] = useState("today");
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
   const colorScheme = useColorScheme();
   const colors = getColors(colorScheme);
+
+  useEffect(() => {
+    async function checkOnboarding() {
+      await runMigrations();
+      const completed = await getOnboardingStatus();
+      setShowOnboarding(!completed);
+      setOnboardingChecked(true);
+    }
+    checkOnboarding();
+  }, []);
+
+  async function handleOnboardingComplete() {
+    await setOnboardingCompleted();
+    setShowOnboarding(false);
+  }
+
+  // Don't render anything until onboarding status is checked
+  if (!onboardingChecked) {
+    return null;
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.tabbar }}>
@@ -629,6 +780,11 @@ function App() {
         >
           <Text style={[styles.backButtonText, { color: colors.primary }]}>← Back to Settings</Text>
         </Pressable>
+      )}
+
+      {/* Onboarding Modal */}
+      {showOnboarding && (
+        <OnboardingModal onComplete={handleOnboardingComplete} colors={colors} />
       )}
     </SafeAreaView>
   );
@@ -728,5 +884,89 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
     textAlign: "center",
+  },
+    // Add these new onboarding styles:
+  onboardingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  onboardingModal: {
+    width: '85%',
+    maxWidth: 400,
+    borderRadius: 24,
+    padding: 32,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  skipButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    padding: 8,
+    zIndex: 1,
+  },
+  skipText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  onboardingContent: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  onboardingEmoji: {
+    fontSize: 64,
+    marginBottom: 24,
+  },
+  onboardingTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  onboardingDescription: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  dotsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 24,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  onboardingButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  navButton: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  primaryButton: {
+    borderWidth: 0,
+  },
+  navButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
   },
 });
