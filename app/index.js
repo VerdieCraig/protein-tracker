@@ -11,6 +11,7 @@ import {
   Text,
   TextInput,
   View,
+  useColorScheme,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
@@ -23,6 +24,50 @@ import { WebView } from "react-native-webview";
  */
 
 let db = null;
+
+// --- Color System ---
+const Colors = {
+  light: {
+    background: "#f5f5f5",
+    surface: "#ffffff",
+    surfaceBorder: "#e0e0e0",
+    primary: "#5b7cff",
+    primaryText: "#ffffff",
+    text: "#1f2937",
+    textSecondary: "#6b7280",
+    textTertiary: "#9ca3af",
+    inputBg: "#f9fafb",
+    inputBorder: "#d1d5db",
+    progressBg: "#e5e7eb",
+    progressFill: "#5b7cff",
+    danger: "#dc2626",
+    tabbar: "#ffffff",
+    tabInactive: "#9ca3af",
+    tabActive: "#1f2937",
+    tabActiveBg: "#f3f4f6",
+  },
+  dark: {
+    background: "#0f1530",
+    surface: "#161d3a",
+    surfaceBorder: "#24305f",
+    primary: "#5b7cff",
+    primaryText: "#0b1020",
+    text: "#ffffff",
+    textSecondary: "#dde3ff",
+    textTertiary: "#a8b0d9",
+    inputBg: "#0f1530",
+    inputBorder: "#2b3772",
+    progressBg: "#0b1020",
+    progressFill: "#58f",
+    danger: "#b00020",
+    tabbar: "#0b1020",
+    tabInactive: "#98a3d4",
+    tabActive: "#ffffff",
+    tabActiveBg: "#161d3a",
+  },
+};
+
+const getColors = (scheme) => Colors[scheme] || Colors.dark;
 
 // --- DB Setup ---
 async function getDatabase() {
@@ -70,14 +115,15 @@ const todayStr = () => {
 };
 
 // --- UI helpers ---
-function Button({ title, onPress, variant = "primary", disabled }) {
+function Button({ title, onPress, variant = "primary", disabled, colors }) {
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
       style={({ pressed }) => [
         styles.btn,
-        variant === "secondary" && styles.btnSecondary,
+        { backgroundColor: variant === "primary" ? colors.primary : "transparent" },
+        variant === "secondary" && { borderWidth: 1, borderColor: colors.danger },
         disabled && styles.btnDisabled,
         pressed && { opacity: 0.8 },
       ]}
@@ -85,7 +131,7 @@ function Button({ title, onPress, variant = "primary", disabled }) {
       <Text
         style={[
           styles.btnText,
-          variant === "secondary" && styles.btnTextSecondary,
+          { color: variant === "primary" ? colors.primaryText : colors.danger },
         ]}
       >
         {title}
@@ -94,21 +140,32 @@ function Button({ title, onPress, variant = "primary", disabled }) {
   );
 }
 
-function Card({ children, style }) {
-  return <View style={[styles.card, style]}>{children}</View>;
+function Card({ children, style, colors }) {
+  return (
+    <View style={[
+      styles.card, 
+      { 
+        backgroundColor: colors.surface,
+        borderColor: colors.surfaceBorder 
+      },
+      style
+    ]}>
+      {children}
+    </View>
+  );
 }
 
-function ProgressBar({ value, max }) {
+function ProgressBar({ value, max, colors }) {
   const pct = Math.max(0, Math.min(1, max > 0 ? value / max : 0));
   return (
-    <View style={styles.progressOuter}>
-      <View style={[styles.progressInner, { width: `${pct * 100}%` }]} />
+    <View style={[styles.progressOuter, { backgroundColor: colors.progressBg }]}>
+      <View style={[styles.progressInner, { width: `${pct * 100}%`, backgroundColor: colors.progressFill }]} />
     </View>
   );
 }
 
 // --- Screens ---
-function TodayScreen() {
+function TodayScreen({ colors }) {
   const [goal, setGoal] = useState(120);
   const [entries, setEntries] = useState([]);
   const [name, setName] = useState("");
@@ -201,35 +258,39 @@ function TodayScreen() {
       <FlatList
         ListHeaderComponent={
           <View>
-            <Text style={styles.h1}>Today</Text>
-            <Card>
+            <Text style={[styles.h1, { color: colors.text }]}>Today</Text>
+            <Card colors={colors}>
               <View style={styles.rowSpace}>
                 <View>
-                  <Text style={styles.kpiLabel}>Protein</Text>
-                  <Text style={styles.kpiValue}>
+                  <Text style={[styles.kpiLabel, { color: colors.textTertiary }]}>Protein</Text>
+                  <Text style={[styles.kpiValue, { color: colors.text }]}>
                     {Math.round(totalProtein)} / {Math.round(goal)} g
                   </Text>
                 </View>
                 <View>
-                  <Text style={styles.kpiLabel}>Calories</Text>
-                  <Text style={styles.kpiValue}>
+                  <Text style={[styles.kpiLabel, { color: colors.textTertiary }]}>Calories</Text>
+                  <Text style={[styles.kpiValue, { color: colors.text }]}>
                     {Math.round(totalCalories)} kcal
                   </Text>
                 </View>
               </View>
-              <ProgressBar value={totalProtein} max={goal} />
+              <ProgressBar value={totalProtein} max={goal} colors={colors} />
             </Card>
 
-            <Card>
-              <Text style={styles.sectionTitle}>
+            <Card colors={colors}>
+              <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
                 {editingId ? "Edit item" : "Add item"}
               </Text>
               <TextInput
                 placeholder="Name (e.g., Greek yogurt)"
                 value={name}
                 onChangeText={setName}
-                style={styles.input}
-                placeholderTextColor="#5a6998"
+                style={[styles.input, { 
+                  backgroundColor: colors.inputBg, 
+                  borderColor: colors.inputBorder,
+                  color: colors.text 
+                }]}
+                placeholderTextColor={colors.textTertiary}
               />
               <View style={styles.row}>
                 <TextInput
@@ -237,8 +298,12 @@ function TodayScreen() {
                   keyboardType="decimal-pad"
                   value={protein}
                   onChangeText={setProtein}
-                  style={[styles.input, styles.inputHalf]}
-                  placeholderTextColor="#5a6998"
+                  style={[styles.input, styles.inputHalf, { 
+                    backgroundColor: colors.inputBg, 
+                    borderColor: colors.inputBorder,
+                    color: colors.text 
+                  }]}
+                  placeholderTextColor={colors.textTertiary}
                 />
                 <View style={{ width: 12 }} />
                 <TextInput
@@ -246,21 +311,30 @@ function TodayScreen() {
                   keyboardType="decimal-pad"
                   value={calories}
                   onChangeText={setCalories}
-                  style={[styles.input, styles.inputHalf]}
-                  placeholderTextColor="#5a6998"
+                  style={[styles.input, styles.inputHalf, { 
+                    backgroundColor: colors.inputBg, 
+                    borderColor: colors.inputBorder,
+                    color: colors.text 
+                  }]}
+                  placeholderTextColor={colors.textTertiary}
                 />
               </View>
-              <Button title={editingId ? "Update" : "Log"} onPress={addEntry} />
+              <Button 
+                title={editingId ? "Update" : "Log"} 
+                onPress={addEntry}
+                colors={colors}
+              />
               {editingId && (
                 <Button
                   title="Cancel Edit"
                   variant="secondary"
                   onPress={clearForm}
+                  colors={colors}
                 />
               )}
             </Card>
 
-            <Text style={[styles.sectionTitle, { marginTop: 8 }]}>
+            <Text style={[styles.sectionTitle, { marginTop: 8, color: colors.textSecondary }]}>
               Logged items
             </Text>
           </View>
@@ -270,20 +344,20 @@ function TodayScreen() {
         renderItem={({ item }) => {
           const isActive = item.id === editingId;
           return (
-            <Card style={[styles.listItem, isActive && styles.activeCard]}>
+            <Card colors={colors} style={[styles.listItem, isActive && { borderColor: colors.primary, borderWidth: 2 }]}>
               <View style={styles.rowSpace}>
                 <View style={{ flex: 1, paddingRight: 8 }}>
-                  <Text style={styles.itemName}>{item.name}</Text>
-                  <Text style={styles.itemSub}>
+                  <Text style={[styles.itemName, { color: colors.text }]}>{item.name}</Text>
+                  <Text style={[styles.itemSub, { color: colors.textSecondary }]}>
                     {new Date(item.created_at).toLocaleTimeString()}
                   </Text>
                 </View>
                 <View style={{ alignItems: "flex-end" }}>
-                  <Text style={styles.itemProtein}>
+                  <Text style={[styles.itemProtein, { color: colors.text }]}>
                     {Math.round(item.protein_g)} g
                   </Text>
                   {!!item.calories && (
-                    <Text style={styles.itemSub}>
+                    <Text style={[styles.itemSub, { color: colors.textSecondary }]}>
                       {Math.round(item.calories)} kcal
                     </Text>
                   )}
@@ -295,30 +369,32 @@ function TodayScreen() {
                       setCalories(item.calories ? String(item.calories) : "");
                       setEditingId(item.id);
                     }}
-                    style={styles.editBtn}
+                    style={[styles.editBtn, { borderColor: colors.surfaceBorder }]}
                   >
-                    <Text style={styles.deleteTxt}>Edit</Text>
+                    <Text style={[styles.deleteTxt, { color: colors.textSecondary }]}>Edit</Text>
                   </Pressable>
 
                   <Pressable
                     onPress={() => deleteEntry(item.id)}
-                    style={styles.delete}
+                    style={[styles.delete, { borderColor: colors.surfaceBorder }]}
                   >
-                    <Text style={styles.deleteTxt}>Delete</Text>
+                    <Text style={[styles.deleteTxt, { color: colors.textSecondary }]}>Delete</Text>
                   </Pressable>
                 </View>
               </View>
             </Card>
           );
         }}
-        ListEmptyComponent={<Text style={styles.empty}>Nothing logged yet.</Text>}
+        ListEmptyComponent={
+          <Text style={[styles.empty, { color: colors.textTertiary }]}>Nothing logged yet.</Text>
+        }
         contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
       />
     </KeyboardAvoidingView>
   );
 }
 
-function HistoryScreen() {
+function HistoryScreen({ colors }) {
   const [rows, setRows] = useState([]);
 
   useEffect(() => {
@@ -349,20 +425,20 @@ function HistoryScreen() {
       keyExtractor={(it) => it.day}
       ListHeaderComponent={
         <View style={{ padding: 16 }}>
-          <Text style={styles.h1}>History (30 days)</Text>
+          <Text style={[styles.h1, { color: colors.text }]}>History (30 days)</Text>
         </View>
       }
       renderItem={({ item }) => (
         <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
-          <Card>
+          <Card colors={colors}>
             <View style={styles.rowSpace}>
-              <Text style={styles.itemName}>{item.day}</Text>
+              <Text style={[styles.itemName, { color: colors.text }]}>{item.day}</Text>
               <View style={{ alignItems: "flex-end" }}>
-                <Text style={styles.itemProtein}>
+                <Text style={[styles.itemProtein, { color: colors.text }]}>
                   {Math.round(item.protein_g)} g
                 </Text>
                 {!!item.calories && (
-                  <Text style={styles.itemSub}>
+                  <Text style={[styles.itemSub, { color: colors.textSecondary }]}>
                     {Math.round(item.calories)} kcal
                   </Text>
                 )}
@@ -372,13 +448,13 @@ function HistoryScreen() {
         </View>
       )}
       ListEmptyComponent={
-        <Text style={[styles.empty, { padding: 16 }]}>No history yet.</Text>
+        <Text style={[styles.empty, { padding: 16, color: colors.textTertiary }]}>No history yet.</Text>
       }
     />
   );
 }
 
-function SettingsScreen({ onNavigate }) {  // Added onNavigate prop
+function SettingsScreen({ onNavigate, colors }) {
   const [goal, setGoal] = useState("120");
 
   useEffect(() => {
@@ -426,39 +502,47 @@ function SettingsScreen({ onNavigate }) {  // Added onNavigate prop
 
   return (
     <View style={{ padding: 16 }}>
-      <Text style={styles.h1}>Settings</Text>
-      <Card>
-        <Text style={styles.sectionTitle}>Daily protein goal (g)</Text>
+      <Text style={[styles.h1, { color: colors.text }]}>Settings</Text>
+      <Card colors={colors}>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Daily protein goal (g)</Text>
         <TextInput
           value={goal}
           onChangeText={setGoal}
           keyboardType="decimal-pad"
-          style={[styles.input, { marginBottom: 12 }]}
-          placeholderTextColor="#5a6998"
+          style={[styles.input, { 
+            marginBottom: 12,
+            backgroundColor: colors.inputBg,
+            borderColor: colors.inputBorder,
+            color: colors.text
+          }]}
+          placeholderTextColor={colors.textTertiary}
         />
-        <Button title="Save" onPress={save} />
+        <Button title="Save" onPress={save} colors={colors} />
       </Card>
 
-      <Card style={{ marginTop: 12 }}>
-        <Text style={[styles.sectionTitle, { color: "#b00020" }]}>
+      <Card colors={colors} style={{ marginTop: 12 }}>
+        <Text style={[styles.sectionTitle, { color: colors.danger }]}>
           Danger zone
         </Text>
         <Button
           title="Delete all entries"
           variant="secondary"
           onPress={clearAll}
+          colors={colors}
         />
       </Card>
 
-      <Card style={{ marginTop: 12 }}>
-        <Text style={styles.sectionTitle}>Legal</Text>
+      <Card colors={colors} style={{ marginTop: 12 }}>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Legal</Text>
         <Button
           title="Privacy Policy"
           onPress={() => onNavigate("privacy")}
+          colors={colors}
         />
         <Button
           title="Terms of Service"
           onPress={() => onNavigate("terms")}
+          colors={colors}
         />
       </Card>
     </View>
@@ -466,16 +550,15 @@ function SettingsScreen({ onNavigate }) {  // Added onNavigate prop
 }
 
 // WebView Screen Component
-function WebViewScreen({ url, title }) {
+function WebViewScreen({ url, title, colors }) {
   return (
-    <View style={{ flex: 1, backgroundColor: "#0f1530" }}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>{title}</Text>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <View style={[styles.header, { backgroundColor: colors.tabbar, borderBottomColor: colors.surfaceBorder }]}>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{title}</Text>
       </View>
       <WebView
         source={{ uri: url }}
-        style={{ flex: 1, backgroundColor: "#0f1530" }}
-        // These props make it look better with markdown
+        style={{ flex: 1, backgroundColor: colors.background }}
         contentMode="mobile"
         scalesPageToFit={true}
         startInLoadingState={true}
@@ -487,19 +570,27 @@ function WebViewScreen({ url, title }) {
 // --- App UI ---
 function App() {
   const [tab, setTab] = useState("today");
+  const colorScheme = useColorScheme();
+  const colors = getColors(colorScheme);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#0b1020" }}>
-      {/* Only show tabbar on main tabs, not on legal pages */}
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.tabbar }}>
       {!["privacy", "terms"].includes(tab) && (
-        <View style={styles.tabbar}>
+        <View style={[styles.tabbar, { backgroundColor: colors.tabbar }]}>
           {["today", "history", "settings"].map((t) => (
             <Pressable
               key={t}
               onPress={() => setTab(t)}
-              style={[styles.tab, tab === t && styles.tabActive]}
+              style={[
+                styles.tab, 
+                { borderColor: colors.surfaceBorder },
+                tab === t && { backgroundColor: colors.tabActiveBg }
+              ]}
             >
-              <Text style={[styles.tabTxt, tab === t && styles.tabTxtActive]}>
+              <Text style={[
+                styles.tabTxt, 
+                { color: tab === t ? colors.tabActive : colors.tabInactive }
+              ]}>
                 {t === "today"
                   ? "Today"
                   : t === "history"
@@ -511,31 +602,32 @@ function App() {
         </View>
       )}
 
-      <View style={{ flex: 1, backgroundColor: "#0f1530" }}>
-        {tab === "today" && <TodayScreen />}
-        {tab === "history" && <HistoryScreen />}
-        {tab === "settings" && <SettingsScreen onNavigate={setTab} />}
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        {tab === "today" && <TodayScreen colors={colors} />}
+        {tab === "history" && <HistoryScreen colors={colors} />}
+        {tab === "settings" && <SettingsScreen onNavigate={setTab} colors={colors} />}
         {tab === "privacy" && (
           <WebViewScreen
             url="https://verdiecraig.github.io/protein-tracker/privacy-policy"
             title="Privacy Policy"
+            colors={colors}
           />
         )}
         {tab === "terms" && (
           <WebViewScreen
             url="https://verdiecraig.github.io/protein-tracker/terms-of-service"
             title="Terms of Service"
+            colors={colors}
           />
         )}
       </View>
 
-      {/* Back button for legal pages */}
       {["privacy", "terms"].includes(tab) && (
         <Pressable
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.surface, borderTopColor: colors.surfaceBorder }]}
           onPress={() => setTab("settings")}
         >
-          <Text style={styles.backButtonText}>← Back to Settings</Text>
+          <Text style={[styles.backButtonText, { color: colors.primary }]}>← Back to Settings</Text>
         </Pressable>
       )}
     </SafeAreaView>
@@ -549,58 +641,44 @@ export default function Index() {
 
 // --- Styles ---
 const styles = StyleSheet.create({
-  h1: { color: "#fff", fontSize: 24, fontWeight: "700", marginBottom: 8 },
-  sectionTitle: { color: "#dde3ff", fontSize: 16, fontWeight: "600", marginBottom: 8 },
+  h1: { fontSize: 24, fontWeight: "700", marginBottom: 8 },
+  sectionTitle: { fontSize: 16, fontWeight: "600", marginBottom: 8 },
   card: {
-    backgroundColor: "#161d3a",
     borderRadius: 16,
     padding: 12,
     borderWidth: 1,
-    borderColor: "#24305f",
     marginBottom: 10,
   },
-  activeCard: { borderColor: "#5b7cff", borderWidth: 2 },
   row: { flexDirection: "row", alignItems: "center" },
   rowSpace: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  kpiLabel: { color: "#a8b0d9", fontSize: 12 },
-  kpiValue: { color: "#fff", fontSize: 20, fontWeight: "800" },
+  kpiLabel: { fontSize: 12 },
+  kpiValue: { fontSize: 20, fontWeight: "800" },
   input: {
-    backgroundColor: "#0f1530",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#2b3772",
     paddingHorizontal: 12,
     paddingVertical: 10,
-    color: "#fff",
     marginBottom: 10,
   },
   inputHalf: { flex: 1 },
   btn: {
-    backgroundColor: "#5b7cff",
     borderRadius: 12,
     paddingVertical: 12,
     alignItems: "center",
     marginTop: 6,
   },
-  btnSecondary: {
-    backgroundColor: "transparent",
-    borderWidth: 1,
-    borderColor: "#b00020",
-  },
   btnDisabled: { opacity: 0.6 },
-  btnText: { color: "#0b1020", fontWeight: "700", fontSize: 16 },
-  btnTextSecondary: { color: "#b00020" },
+  btnText: { fontWeight: "700", fontSize: 16 },
   listItem: {},
-  itemName: { color: "#fff", fontSize: 16, fontWeight: "600" },
-  itemSub: { color: "#9fb0ff", fontSize: 12, marginTop: 2 },
-  itemProtein: { color: "#fff", fontSize: 16, fontWeight: "800" },
+  itemName: { fontSize: 16, fontWeight: "600" },
+  itemSub: { fontSize: 12, marginTop: 2 },
+  itemProtein: { fontSize: 16, fontWeight: "800" },
   editBtn: {
     marginTop: 6,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#3b466f",
   },
   delete: {
     marginTop: 6,
@@ -608,21 +686,18 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#3b466f",
   },
-  deleteTxt: { color: "#a3aed6", fontSize: 12 },
-  empty: { color: "#a8b0d9", textAlign: "center" },
+  deleteTxt: { fontSize: 12 },
+  empty: { textAlign: "center" },
   progressOuter: {
     height: 12,
-    backgroundColor: "#0b1020",
     borderRadius: 999,
     overflow: "hidden",
     marginTop: 10,
   },
-  progressInner: { height: 12, backgroundColor: "#58f", borderRadius: 999 },
+  progressInner: { height: 12, borderRadius: 999 },
   tabbar: {
     flexDirection: "row",
-    backgroundColor: "#0b1020",
     paddingHorizontal: 8,
     paddingVertical: 8,
     gap: 8,
@@ -632,33 +707,24 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#233066",
     alignItems: "center",
   },
-  tabActive: { backgroundColor: "#161d3a" },
-  tabTxt: { color: "#98a3d4", fontWeight: "700" },
-  tabTxtActive: { color: "#fff" },
+  tabTxt: { fontWeight: "700" },
   header: {
-    backgroundColor: "#0b1020",
     paddingVertical: 16,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#1f2937",
   },
   headerTitle: {
-    color: "#f9fafb",
     fontSize: 18,
     fontWeight: "600",
   },
   backButton: {
-    backgroundColor: "#1f2937",
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderTopWidth: 1,
-    borderTopColor: "#374151",
   },
   backButtonText: {
-    color: "#3b82f6",
     fontSize: 16,
     fontWeight: "500",
     textAlign: "center",
