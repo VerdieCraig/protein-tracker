@@ -25,7 +25,7 @@ A simple, elegant Android mobile app for tracking daily protein and calorie inta
 ## 📸 Screenshots
 
 | Today View | History | Settings |
-|------------|---------|----------|
+|:----------:|:-------:|:--------:|
 | ![Today](screenshots/today.jpg) | ![History](screenshots/history.jpg) | ![Settings](screenshots/settings.jpg) |
 
 *Supports both light and dark mode based on your device settings*
@@ -33,8 +33,10 @@ A simple, elegant Android mobile app for tracking daily protein and calorie inta
 <details>
 <summary>View Light Mode Screenshots</summary>
 
+## 📸 Screenshots
+
 | Today View | History | Settings |
-|------------|---------|----------|
+|:----------:|:-------:|:--------:|
 | ![Today Light](screenshots/today-light.jpg) | ![History Light](screenshots/history-light.jpg) | ![Settings Light](screenshots/settings-light.jpg) |
 
 </details>
