@@ -24,9 +24,24 @@ A simple, elegant Android mobile app for tracking daily protein and calorie inta
 
 ## 📸 Screenshots
 
-| Today View | History | Settings |
-|:----------:|:-------:|:--------:|
-| ![Today](screenshots/today.jpg) | ![History](screenshots/history.jpg) | ![Settings](screenshots/settings.jpg) |
+<table>
+  <tr>
+    <th>Today View</th>
+    <th>History</th>
+    <th>Settings</th>
+  </tr>
+  <tr>
+    <td align="center" valign="top">
+      <img src="screenshots/today.jpg" alt="Today" width="250">
+    </td>
+    <td align="center" valign="top">
+      <img src="screenshots/history.jpg" alt="History" width="250">
+    </td>
+    <td align="center" valign="top">
+      <img src="screenshots/settings.jpg" alt="Settings" width="250">
+    </td>
+  </tr>
+</table>
 
 *Supports both light and dark mode based on your device settings*
 
@@ -35,10 +50,25 @@ A simple, elegant Android mobile app for tracking daily protein and calorie inta
 
 ## 📸 Screenshots
 
-| Today View | History | Settings |
-|:----------:|:-------:|:--------:|
-| ![Today Light](screenshots/today-light.jpg) | ![History Light](screenshots/history-light.jpg) | ![Settings Light](screenshots/settings-light.jpg) |
 
+<table>
+  <tr>
+    <th>Today View</th>
+    <th>History</th>
+    <th>Settings</th>
+  </tr>
+  <tr>
+    <td align="center" valign="top">
+      <img src="screenshots/today-light.jpg" alt="Today" width="250">
+    </td>
+    <td align="center" valign="top">
+      <img src="screenshots/history-light.jpg" alt="History" width="250">
+    </td>
+    <td align="center" valign="top">
+      <img src="screenshots/settings-light.jpg" alt="Settings" width="250">
+    </td>
+  </tr>
+</table>
 </details>
 
 ## 🎯 Why Protein Tracker?
