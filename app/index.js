@@ -327,32 +327,34 @@ function TodayScreen({ colors }) {
                 placeholderTextColor={colors.textTertiary}
               />
               <View style={styles.row}>
-                <TextInput
-                  placeholder="Protein (g)"
-                  keyboardType="decimal-pad"
-                  value={protein}
-                  onChangeText={setProtein}
-                  style={[styles.input, styles.inputHalf, { 
-                    backgroundColor: colors.inputBg, 
-                    borderColor: colors.inputBorder,
-                    color: colors.text 
-                  }]}
-                  placeholderTextColor={colors.textTertiary}
-                />
-                <View style={{ width: 12 }} />
-                <TextInput
-                  placeholder="Calories (optional)"
-                  keyboardType="decimal-pad"
-                  value={calories}
-                  onChangeText={setCalories}
-                  style={[styles.input, styles.inputHalf, { 
-                    backgroundColor: colors.inputBg, 
-                    borderColor: colors.inputBorder,
-                    color: colors.text 
-                  }]}
-                  placeholderTextColor={colors.textTertiary}
-                />
-              </View>
+              <TextInput
+                placeholder="Protein (g)"
+                keyboardType="decimal-pad"
+                value={protein}
+                onChangeText={setProtein}
+                style={[styles.input, { 
+                  flex: 0.40,  // slightly smaller
+                  backgroundColor: colors.inputBg, 
+                  borderColor: colors.inputBorder,
+                  color: colors.text 
+                }]}
+                placeholderTextColor={colors.textTertiary}
+              />
+              <View style={{ width: 12 }} />
+              <TextInput
+                placeholder="Calories (optional)"
+                keyboardType="decimal-pad"
+                value={calories}
+                onChangeText={setCalories}
+                style={[styles.input, { 
+                  flex: 0.60,  // slightly larger
+                  backgroundColor: colors.inputBg, 
+                  borderColor: colors.inputBorder,
+                  color: colors.text 
+                }]}
+                placeholderTextColor={colors.textTertiary}
+              />
+            </View>
               <Button 
                 title={editingId ? "Update" : "Log"} 
                 onPress={addEntry}
