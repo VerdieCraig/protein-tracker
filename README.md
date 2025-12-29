@@ -17,8 +17,7 @@ A simple, elegant Android mobile app for tracking daily protein and calorie inta
 ## 📱 Get the App
 
 ### Google Play Store
-[Download from Google Play](#) *(Coming Soon)*
-
+[Download from Google Play](https://play.google.com/store/apps/details?id=com.darklotusdev.proteintracker) 
 ### Direct Download
 [Download APK](https://github.com/VerdieCraig/protein-tracker/releases/latest)
 
