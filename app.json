@@ -2,12 +2,11 @@
   "expo": {
     "name": "Protein Tracker",
     "slug": "protein-tracker",
-    "version": "1.0.0",
+    "version": "1.2.0",
     "orientation": "default",
     "icon": "./icon.png",
     "scheme": "proteintracker",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
@@ -16,7 +15,6 @@
         "backgroundColor": "#0b1020",
         "foregroundImage": "./adaptive-icon.png"
        },
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.darklotusdev.proteintracker"
     },

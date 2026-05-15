@@ -1,6 +1,8 @@
 # 🥗 Protein Tracker
 
-A simple, elegant Android mobile app for tracking daily protein and calorie intake. Built with React Native and Expo, featuring offline-first architecture with local SQLite storage and automatic light/dark mode support.
+A simple, elegant Android mobile app for tracking daily protein and calorie intake.
+Built with React Native and Expo, featuring offline-first architecture with local
+SQLite storage and automatic light/dark mode support.
 
 ## ✨ Features
 
@@ -17,8 +19,11 @@ A simple, elegant Android mobile app for tracking daily protein and calorie inta
 ## 📱 Get the App
 
 ### Google Play Store
-[Download from Google Play](https://play.google.com/store/apps/details?id=com.darklotusdev.proteintracker) 
+
+[Download from Google Play](https://play.google.com/store/apps/details?id=com.darklotusdev.proteintracker)
+
 ### Direct Download
+
 [Download APK](https://github.com/VerdieCraig/protein-tracker/releases/latest)
 
 ## 📸 Screenshots
@@ -47,8 +52,7 @@ A simple, elegant Android mobile app for tracking daily protein and calorie inta
 <details>
 <summary>View Light Mode Screenshots</summary>
 
-## 📸 Screenshots
-
+## 📸 Light ModeScreenshots
 
 <table>
   <tr>
@@ -89,7 +93,7 @@ A simple, elegant Android mobile app for tracking daily protein and calorie inta
 
 ## 📦 Project Structure
 
-```
+```text
 protein-tracker/
 ├── .vscode/              # VS Code workspace settings
 ├── app/
@@ -128,6 +132,7 @@ protein-tracker/
 ### Database Schema
 
 **Settings Table:**
+
 ```sql
 CREATE TABLE settings (
   id INTEGER PRIMARY KEY NOT NULL,
@@ -136,6 +141,7 @@ CREATE TABLE settings (
 ```
 
 **Entries Table:**
+
 ```sql
 CREATE TABLE entries (
   id INTEGER PRIMARY KEY NOT NULL,
@@ -148,6 +154,7 @@ CREATE TABLE entries (
 ```
 
 **Onboarding Table:**
+
 ```sql
 CREATE TABLE onboarding (
   id INTEGER PRIMARY KEY NOT NULL,
@@ -210,11 +217,13 @@ eas build --platform android --profile preview
 
 ## 📱 Deployment
 
-The app is published on Google Play Store. Legal documents (Privacy Policy and Terms of Service) are hosted on GitHub Pages for easy access and updates.
+The app is published on Google Play Store. Legal documents (Privacy Policy and
+Terms of Service) are hosted on GitHub Pages for easy access and updates.
 
 ## 🤝 Contributing
 
-Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/VerdieCraig/protein-tracker/issues).
+Contributions, issues, and feature requests are welcome! Feel free to check the
+[issues page](https://github.com/VerdieCraig/protein-tracker/issues).
 
 ### Development Guidelines
 
@@ -231,8 +240,9 @@ This project is [MIT](LICENSE) licensed.
 ## 👤 Developer
 
 **Dark Lotus Dev**
+
 - Website: [https://darklotus.dev](https://darklotus.dev)
-- Email: contact@darklotus.dev
+- Email: <contact@darklotus.dev>
 - GitHub: [@VerdieCraig](https://github.com/VerdieCraig)
 
 ## 🔒 Privacy & Legal
@@ -240,7 +250,8 @@ This project is [MIT](LICENSE) licensed.
 - [Privacy Policy](https://verdiecraig.github.io/protein-tracker/privacy-policy)
 - [Terms of Service](https://verdiecraig.github.io/protein-tracker/terms-of-service)
 
-This app is committed to user privacy. All data is stored locally on your device and is never transmitted to external servers.
+This app is committed to user privacy. All data is stored locally on your device
+and is never transmitted to external servers.
 
 ## 🙏 Acknowledgments
 
