@@ -262,7 +262,6 @@ function TodayScreen({ colors }) {
   }
 
   async function addEntry() {
-    const p = parseFloat(protein);
     if (!name.trim())
       return Alert.alert("Missing name", "Add a short label like 'Chicken breast'.");
     
