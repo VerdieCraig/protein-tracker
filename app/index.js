@@ -5,8 +5,10 @@ import {
   Alert,
   FlatList,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   Pressable,
+  SectionList,
   StyleSheet,
   Text,
   TextInput,
@@ -104,7 +106,13 @@ async function runMigrations() {
     SELECT 1, 120.0
     WHERE NOT EXISTS (SELECT 1 FROM settings WHERE id = 1);
   `);
+
+  // Calorie goal column — safe no-op if already exists
+  await database.execAsync(
+    `ALTER TABLE settings ADD COLUMN goal_calories_kcal REAL DEFAULT 2000;`
+  ).catch(() => {});
 }
+
 // --- Onboarding Setup ---
 async function getOnboardingStatus() {
   const database = await getDatabase();
@@ -201,6 +209,7 @@ function ProgressBar({ value, max, colors }) {
 // --- Screens ---
 function TodayScreen({ colors }) {
   const [goal, setGoal] = useState(120);
+  const [calorieGoal, setCalorieGoal] = useState(2000);
   const [entries, setEntries] = useState([]);
   const [name, setName] = useState("");
   const [protein, setProtein] = useState("");
@@ -228,9 +237,12 @@ function TodayScreen({ colors }) {
   async function refreshGoal() {
     const database = await getDatabase();
     const result = await database.getFirstAsync(
-      "SELECT goal_protein_g FROM settings WHERE id = 1;"
+      "SELECT goal_protein_g, goal_calories_kcal FROM settings WHERE id = 1;"
     );
-    if (result) setGoal(result.goal_protein_g);
+    if (result) {
+      setGoal(result.goal_protein_g);
+      setCalorieGoal(result.goal_calories_kcal ?? 2000); // add this
+    }
   }
 
   async function refreshEntries() {
@@ -245,7 +257,7 @@ function TodayScreen({ colors }) {
   function clearForm() {
     setName("");
     setProtein("");
-    setCalories("");
+    ies("");
     setEditingId(null);
   }
 
@@ -253,9 +265,8 @@ function TodayScreen({ colors }) {
     const p = parseFloat(protein);
     if (!name.trim())
       return Alert.alert("Missing name", "Add a short label like 'Chicken breast'.");
-    if (isNaN(p) || p <= 0)
-      return Alert.alert("Protein required", "Enter grams of protein (e.g., 32).");
-
+    
+    const p = protein.trim() ? parseFloat(protein) : 0;
     const c = calories.trim() ? parseFloat(calories) : null;
     const nowISO = new Date().toISOString();
     const database = await getDatabase();
@@ -301,14 +312,17 @@ function TodayScreen({ colors }) {
                     {Math.round(totalProtein)} / {Math.round(goal)} g
                   </Text>
                 </View>
-                <View>
+                <View style={{ alignItems: "flex-end" }}>
                   <Text style={[styles.kpiLabel, { color: colors.textTertiary }]}>Calories</Text>
                   <Text style={[styles.kpiValue, { color: colors.text }]}>
-                    {Math.round(totalCalories)} kcal
+                    {Math.round(totalCalories)} / {Math.round(calorieGoal)} kcal
                   </Text>
                 </View>
               </View>
               <ProgressBar value={totalProtein} max={goal} colors={colors} />
+              <View style={{ marginTop: 6 }}>
+                <ProgressBar value={totalCalories} max={calorieGoal} colors={colors} />
+              </View>
             </Card>
 
             <Card colors={colors}>
@@ -328,7 +342,7 @@ function TodayScreen({ colors }) {
               />
               <View style={styles.row}>
               <TextInput
-                placeholder="Protein (g)"
+                placeholder="Protein (g) — optional"
                 keyboardType="decimal-pad"
                 value={protein}
                 onChangeText={setProtein}
@@ -431,7 +445,7 @@ function TodayScreen({ colors }) {
 }
 
 function HistoryScreen({ colors }) {
-  const [rows, setRows] = useState([]);
+  const [sections, setSections] = useState([]);
 
   useEffect(() => {
     async function init() {
@@ -444,47 +458,81 @@ function HistoryScreen({ colors }) {
   async function refresh() {
     const database = await getDatabase();
     const results = await database.getAllAsync(`
-      SELECT day,
-             SUM(protein_g) AS protein_g,
-             SUM(calories)  AS calories
-      FROM entries
+      SELECT * FROM entries
       WHERE day >= date('now','-30 day')
-      GROUP BY day
-      ORDER BY day DESC;
+      ORDER BY day DESC, created_at DESC;
     `);
-    setRows(results || []);
+
+    // Group into sections by day
+    const map = {};
+    for (const entry of results || []) {
+      if (!map[entry.day]) map[entry.day] = [];
+      map[entry.day].push(entry);
+    }
+    setSections(
+      Object.entries(map).map(([day, data]) => ({ title: day, data }))
+    );
+  }
+
+  async function reAddEntry(entry) {
+    const today = todayStr();
+    if (entry.day === today) {
+      Alert.alert("Already today", "This entry is already logged for today.");
+      return;
+    }
+    const database = await getDatabase();
+    await database.runAsync(
+      "INSERT INTO entries (day, name, protein_g, calories, created_at) VALUES (?, ?, ?, ?, ?);",
+      [today, entry.name, entry.protein_g, entry.calories ?? null, new Date().toISOString()]
+    );
+    Alert.alert("Added!", `"${entry.name}" has been added to today.`);
   }
 
   return (
-    <FlatList
-      data={rows}
-      keyExtractor={(it) => it.day}
+    <SectionList
+      sections={sections}
+      keyExtractor={(item) => String(item.id)}
       ListHeaderComponent={
         <View style={{ padding: 16 }}>
           <Text style={[styles.h1, { color: colors.text }]}>History (30 days)</Text>
         </View>
       }
+      renderSectionHeader={({ section: { title } }) => (
+        <Text style={[styles.dayHeader, { color: colors.textTertiary, backgroundColor: colors.background }]}>
+          {title}
+        </Text>
+      )}
       renderItem={({ item }) => (
         <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
           <Card colors={colors}>
             <View style={styles.rowSpace}>
-              <Text style={[styles.itemName, { color: colors.text }]}>{item.day}</Text>
-              <View style={{ alignItems: "flex-end" }}>
-                <Text style={[styles.itemProtein, { color: colors.text }]}>
-                  {Math.round(item.protein_g)} g
-                </Text>
+              <View style={{ flex: 1, paddingRight: 8 }}>
+                <Text style={[styles.itemName, { color: colors.text }]}>{item.name}</Text>
                 {!!item.calories && (
                   <Text style={[styles.itemSub, { color: colors.textSecondary }]}>
                     {Math.round(item.calories)} kcal
                   </Text>
                 )}
               </View>
+              <View style={{ alignItems: "flex-end" }}>
+                <Text style={[styles.itemProtein, { color: colors.text }]}>
+                  {Math.round(item.protein_g)} g
+                </Text>
+                <Pressable
+                  onPress={() => reAddEntry(item)}
+                  style={[styles.reAddBtn, { borderColor: colors.primary }]}
+                >
+                  <Text style={[styles.reAddTxt, { color: colors.primary }]}>+ Today</Text>
+                </Pressable>
+              </View>
             </View>
           </Card>
         </View>
       )}
       ListEmptyComponent={
-        <Text style={[styles.empty, { padding: 16, color: colors.textTertiary }]}>No history yet.</Text>
+        <Text style={[styles.empty, { padding: 16, color: colors.textTertiary }]}>
+          No history yet.
+        </Text>
       }
     />
   );
@@ -492,30 +540,37 @@ function HistoryScreen({ colors }) {
 
 function SettingsScreen({ onNavigate, colors }) {
   const [goal, setGoal] = useState("120");
+  const [calorieGoal, setCalorieGoal] = useState("2000");
 
   useEffect(() => {
     async function init() {
       await runMigrations();
       const database = await getDatabase();
       const result = await database.getFirstAsync(
-        "SELECT goal_protein_g FROM settings WHERE id = 1;"
+        "SELECT goal_protein_g, goal_calories_kcal FROM settings WHERE id = 1;"
       );
-      if (result) setGoal(String(result.goal_protein_g));
+      if (result) {
+        setGoal(String(result.goal_protein_g));
+        setCalorieGoal(String(result.goal_calories_kcal ?? 2000));
+      }
     }
     init();
   }, []);
 
   async function save() {
     const g = parseFloat(goal);
+    const c = parseFloat(calorieGoal);
     if (isNaN(g) || g <= 0)
       return Alert.alert("Invalid goal", "Enter a positive number of grams.");
-    
+    if (isNaN(c) || c <= 0)
+      return Alert.alert("Invalid goal", "Enter a positive calorie target.");
+
     const database = await getDatabase();
     await database.runAsync(
-      "UPDATE settings SET goal_protein_g = ? WHERE id = 1;",
-      [g]
+      "UPDATE settings SET goal_protein_g = ?, goal_calories_kcal = ? WHERE id = 1;",
+      [g, c]
     );
-    Alert.alert("Saved", "Daily protein goal updated.");
+    Alert.alert("Saved", "Goals updated.");
   }
 
   function clearAll() {
@@ -535,7 +590,33 @@ function SettingsScreen({ onNavigate, colors }) {
       ]
     );
   }
+  async function sendFeedback() {
+    const email = 'contact@darklotus.dev';
+    const subject = encodeURIComponent('Protein Tracker Feedback');
+    const body = encodeURIComponent(
+      `Hi Dark Lotus Dev,\n\n` +
+      `[ Describe your feedback, suggestion, or bug below ]\n\n` +
+      `---\n` +
+      `Type: [ Bug Report / Feature Request / General Feedback ]\n\n` +
+      `Details:\n\n\n` +
+      `---\n` +
+      `App Version: 1.2.0\n` +
+      `Device: ${Platform.OS} ${Platform.Version}`
+    );
+    const url = `mailto:${email}?subject=${subject}&body=${body}`;
+    const canOpen = await Linking.canOpenURL(url);
+    if (canOpen) {
+      await Linking.openURL(url);
+    } else {
+      Alert.alert('No Email App Found', `Email us at:\n\ncontact@darklotus.dev`, [{ text: 'OK' }]);
+    }
+  }
 
+  function openReview() {
+    Linking.openURL(
+      'https://play.google.com/store/apps/details?id=com.darklotusdev.proteintracker&showAllReviews=true'
+    );
+  }
   return (
     <View style={{ padding: 16 }}>
       <Text style={[styles.h1, { color: colors.text }]}>Settings</Text>
@@ -553,9 +634,27 @@ function SettingsScreen({ onNavigate, colors }) {
           }]}
           placeholderTextColor={colors.textTertiary}
         />
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Daily calorie goal (kcal)</Text>
+        <TextInput
+          value={calorieGoal}
+          onChangeText={setCalorieGoal}
+          keyboardType="decimal-pad"
+          style={[styles.input, {
+            marginBottom: 12,
+            backgroundColor: colors.inputBg,
+            borderColor: colors.inputBorder,
+            color: colors.text
+          }]}
+          placeholderTextColor={colors.textTertiary}
+          placeholder="2000"
+        />
         <Button title="Save" onPress={save} colors={colors} />
       </Card>
-
+      <Card colors={colors} style={{ marginTop: 12 }}>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Support</Text>
+        <Button title="Send Feedback" onPress={sendFeedback} colors={colors} />
+        <Button title="Rate & Review" onPress={openReview} colors={colors} />
+      </Card>
       <Card colors={colors} style={{ marginTop: 12 }}>
         <Text style={[styles.sectionTitle, { color: colors.danger }]}>
           Danger zone
@@ -846,6 +945,25 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   deleteTxt: { fontSize: 12 },
+  dayHeader: {
+    fontSize: 12,
+    fontWeight: "700",
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+  },
+  reAddBtn: {
+    marginTop: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  reAddTxt: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
   empty: { textAlign: "center" },
   progressOuter: {
     height: 12,
