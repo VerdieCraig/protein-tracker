@@ -257,7 +257,7 @@ function TodayScreen({ colors }) {
   function clearForm() {
     setName("");
     setProtein("");
-    ies("");
+    setCalories("");
     setEditingId(null);
   }
 
