@@ -341,7 +341,7 @@ function TodayScreen({ colors }) {
               />
               <View style={styles.row}>
               <TextInput
-                placeholder="Protein (g) — optional"
+                placeholder="Protein (g)"
                 keyboardType="decimal-pad"
                 value={protein}
                 onChangeText={setProtein}
@@ -355,7 +355,7 @@ function TodayScreen({ colors }) {
               />
               <View style={{ width: 12 }} />
               <TextInput
-                placeholder="Calories (optional)"
+                placeholder="Calories (kcal)"
                 keyboardType="decimal-pad"
                 value={calories}
                 onChangeText={setCalories}
