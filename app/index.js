@@ -1,5 +1,6 @@
 // --- Imports ---
 import * as SQLite from "expo-sqlite";
+import * as StoreReview from 'expo-store-review';
 import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
@@ -148,6 +149,27 @@ async function setOnboardingCompleted() {
   );
 }
 
+async function getWhatsNewSeen() {
+  const database = await getDatabase();
+  await database.execAsync(`
+    CREATE TABLE IF NOT EXISTS whats_new (
+      id TEXT PRIMARY KEY NOT NULL,
+      seen INTEGER NOT NULL DEFAULT 0
+    );
+  `);
+  const result = await database.getFirstAsync(
+    "SELECT seen FROM whats_new WHERE id = 'v1.2.0';"
+  );
+  return result ? result.seen === 1 : false;
+}
+
+async function setWhatsNewSeen() {
+  const database = await getDatabase();
+  await database.runAsync(
+    "INSERT OR REPLACE INTO whats_new (id, seen) VALUES ('v1.2.0', 1);"
+  );
+}
+
 const todayStr = () => {
   const d = new Date();
   const y = d.getFullYear();
@@ -215,6 +237,7 @@ function TodayScreen({ colors }) {
   const [protein, setProtein] = useState("");
   const [calories, setCalories] = useState("");
   const [editingId, setEditingId] = useState(null);
+  const [showHistoryPicker, setShowHistoryPicker] = useState(false);
 
   const totalProtein = useMemo(
     () => entries.reduce((sum, e) => sum + (e.protein_g || 0), 0),
@@ -293,6 +316,16 @@ function TodayScreen({ colors }) {
     await refreshEntries();
   }
 
+  async function addFromHistory(entry) {
+    const database = await getDatabase();
+    await database.runAsync(
+      "INSERT INTO entries (day, name, protein_g, calories, created_at) VALUES (?, ?, ?, ?, ?);",
+      [todayStr(), entry.name, entry.protein_g, entry.calories ?? null, new Date().toISOString()]
+    );
+    await refreshEntries();
+    // keep modal open so user can add multiple items
+  }
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -311,17 +344,21 @@ function TodayScreen({ colors }) {
                     {Math.round(totalProtein)} / {Math.round(goal)} g
                   </Text>
                 </View>
-                <View style={{ alignItems: "flex-end" }}>
-                  <Text style={[styles.kpiLabel, { color: colors.textTertiary }]}>Calories</Text>
-                  <Text style={[styles.kpiValue, { color: colors.text }]}>
-                    {Math.round(totalCalories)} / {Math.round(calorieGoal)} kcal
-                  </Text>
-                </View>
+                {calorieGoal > 0 && (
+                  <View style={{ alignItems: "flex-end" }}>
+                    <Text style={[styles.kpiLabel, { color: colors.textTertiary }]}>Calories</Text>
+                    <Text style={[styles.kpiValue, { color: colors.text }]}>
+                      {Math.round(totalCalories)} / {Math.round(calorieGoal)} kcal
+                    </Text>
+                  </View>
+                )}
               </View>
               <ProgressBar value={totalProtein} max={goal} colors={colors} />
-              <View style={{ marginTop: 6 }}>
-                <ProgressBar value={totalCalories} max={calorieGoal} colors={colors} />
-              </View>
+              {calorieGoal > 0 && (
+                <View style={{ marginTop: 6 }}>
+                  <ProgressBar value={totalCalories} max={calorieGoal} colors={colors} />
+                </View>
+              )}
             </Card>
 
             <Card colors={colors}>
@@ -381,6 +418,17 @@ function TodayScreen({ colors }) {
                   colors={colors}
                 />
               )}
+
+              {!editingId && (
+                <Pressable
+                  onPress={() => setShowHistoryPicker(true)}
+                  style={[styles.historyPickerBtn, { borderColor: colors.surfaceBorder }]}
+                >
+                  <Text style={[styles.historyPickerTxt, { color: colors.textSecondary }]}>
+                    + Add from previous
+                  </Text>
+                </Pressable>
+              )}
             </Card>
 
             <Text style={[styles.sectionTitle, { marginTop: 8, color: colors.textSecondary }]}>
@@ -439,6 +487,13 @@ function TodayScreen({ colors }) {
         }
         contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
       />
+      {showHistoryPicker && (
+        <HistoryPickerModal
+          onClose={() => setShowHistoryPicker(false)}
+          onAdd={addFromHistory}
+          colors={colors}
+        />
+      )}
     </KeyboardAvoidingView>
   );
 }
@@ -474,18 +529,13 @@ function HistoryScreen({ colors }) {
   }
 
   async function reAddEntry(entry) {
-    const today = todayStr();
-    if (entry.day === today) {
-      Alert.alert("Already today", "This entry is already logged for today.");
-      return;
-    }
-    const database = await getDatabase();
-    await database.runAsync(
-      "INSERT INTO entries (day, name, protein_g, calories, created_at) VALUES (?, ?, ?, ?, ?);",
-      [today, entry.name, entry.protein_g, entry.calories ?? null, new Date().toISOString()]
-    );
-    Alert.alert("Added!", `"${entry.name}" has been added to today.`);
-  }
+  const database = await getDatabase();
+  await database.runAsync(
+    "INSERT INTO entries (day, name, protein_g, calories, created_at) VALUES (?, ?, ?, ?, ?);",
+    [todayStr(), entry.name, entry.protein_g, entry.calories ?? null, new Date().toISOString()]
+  );
+  Alert.alert("Added!", `"${entry.name}" has been added to today.`);
+}
 
   return (
     <SectionList
@@ -558,11 +608,10 @@ function SettingsScreen({ onNavigate, colors }) {
 
   async function save() {
     const g = parseFloat(goal);
-    const c = parseFloat(calorieGoal);
-    if (isNaN(g) || g <= 0)
-      return Alert.alert("Invalid goal", "Enter a positive number of grams.");
-    if (isNaN(c) || c <= 0)
-      return Alert.alert("Invalid goal", "Enter a positive calorie target.");
+    
+    const c = calorieGoal.trim() ? parseFloat(calorieGoal) : null;
+    if (c !== null && (isNaN(c) || c <= 0))
+      return Alert.alert("Invalid goal", "Enter a positive calorie target, or leave it blank.");
 
     const database = await getDatabase();
     await database.runAsync(
@@ -611,10 +660,15 @@ function SettingsScreen({ onNavigate, colors }) {
     }
   }
 
-  function openReview() {
-    Linking.openURL(
-      'https://play.google.com/store/apps/details?id=com.darklotusdev.proteintracker&showAllReviews=true'
-    );
+  async function openReview() {
+    const isAvailable = await StoreReview.isAvailableAsync();
+    if (isAvailable) {
+      await StoreReview.requestReview();
+    } else {
+      Linking.openURL(
+        'https://play.google.com/store/apps/details?id=com.darklotusdev.proteintracker'
+      );
+    }
   }
   return (
     <View style={{ padding: 16 }}>
@@ -700,24 +754,33 @@ function WebViewScreen({ url, title, colors }) {
     </View>
   );
 }
+
 // --- Onboarding Component ---
 function OnboardingModal({ onComplete, colors }) {
   const [currentScreen, setCurrentScreen] = useState(0);
 
   const screens = [
-    {
-      title: "Welcome to Protein Tracker",
-      description: "Track your daily protein intake easily and reach your fitness goals.",          
-    },
-    {
-      title: "Log Your Meals",
-      description: "Add entries throughout the day with protein and calorie counts. Quick and simple.",    
-    },
-    {
-      title: "Track Your Progress",
-      description: "Monitor your daily goals and view your history over the past 30 days.",      
-    },
-  ];
+  {
+    title: "Welcome to Protein Tracker",
+    description: "A simple, private way to track your daily protein and calorie intake. No accounts, no cloud — just you and your data.",
+  },
+  {
+    title: "Log Your Meals",
+    description: "Add food entries throughout the day with a name, protein grams, and optional calories. Protein is optional too — log calories-only items like drinks or snacks freely.",
+  },
+  {
+    title: "Set Your Goals",
+    description: "Head to Settings to set a daily protein target and an optional calorie goal. Your progress bars on the Today screen update automatically as you log.",
+  },
+  {
+    title: "Review Your History",
+    description: "The History tab shows every entry from the past 30 days, grouped by date. Tap '+ Today' on any item to re-add it to today's log.",
+  },
+  {
+    title: "Add from Previous",
+    description: "On the Today screen, tap '+ Add from previous' to quickly pull in meals from past days — great for foods you eat regularly. You can add the same item multiple times.",
+  },
+];
 
   const isLastScreen = currentScreen === screens.length - 1;
 
@@ -796,11 +859,117 @@ function OnboardingModal({ onComplete, colors }) {
   );
 }
 
+function HistoryPickerModal({ onClose, onAdd, colors }) {
+  const [sections, setSections] = useState([]);
+
+  useEffect(() => {
+    async function load() {
+      const database = await getDatabase();
+      const results = await database.getAllAsync(`
+        SELECT * FROM entries
+        WHERE day < date('now')
+        ORDER BY day DESC, created_at DESC;
+      `);
+      const map = {};
+      for (const entry of results || []) {
+        if (!map[entry.day]) map[entry.day] = [];
+        map[entry.day].push(entry);
+      }
+      setSections(
+        Object.entries(map).map(([day, data]) => ({ title: day, data }))
+      );
+    }
+    load();
+  }, []);
+
+  return (
+    <View style={[styles.pickerOverlay, { backgroundColor: 'rgba(0,0,0,0.6)' }]}>
+      <View style={[styles.pickerSheet, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+        <View style={[styles.pickerHeader, { borderBottomColor: colors.surfaceBorder }]}>
+          <Text style={[styles.pickerTitle, { color: colors.text }]}>Add from Previous</Text>
+          <Pressable onPress={onClose}>
+            <Text style={[styles.pickerClose, { color: colors.primary }]}>Done</Text>
+          </Pressable>
+        </View>
+
+        {sections.length === 0 ? (
+          <Text style={[styles.empty, { color: colors.textTertiary, padding: 24 }]}>
+            No previous entries found.
+          </Text>
+        ) : (
+          <SectionList
+            sections={sections}
+            keyExtractor={(item) => String(item.id)}
+            renderSectionHeader={({ section: { title } }) => (
+              <Text style={[styles.dayHeader, { color: colors.textTertiary, backgroundColor: colors.surface }]}>
+                {title}
+              </Text>
+            )}
+            renderItem={({ item }) => (
+              <Pressable
+                onPress={() => onAdd(item)}
+                style={[styles.pickerRow, { borderBottomColor: colors.surfaceBorder }]}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.itemName, { color: colors.text }]}>{item.name}</Text>
+                  <Text style={[styles.itemSub, { color: colors.textSecondary }]}>
+                    {item.protein_g}g protein
+                    {item.calories ? ` · ${Math.round(item.calories)} kcal` : ''}
+                  </Text>
+                </View>
+                <Text style={[styles.reAddTxt, { color: colors.primary }]}>+ Add</Text>
+              </Pressable>
+            )}
+          />
+        )}
+      </View>
+    </View>
+  );
+}
+
+function WhatsNewModal({ onDismiss, colors }) {
+  const features = [
+    { emoji: "🎯", text: "Calorie goals alongside your protein target" },
+    { emoji: "🍎", text: "Protein is now optional — log calories-only items freely" },
+    { emoji: "🔄", text: "Re-add meals from history, as many times as you like" },
+    { emoji: "✉️", text: "Send Feedback directly from Settings" },
+    { emoji: "⭐", text: "Rate & Review the app from Settings" },
+  ];
+
+  return (
+    <View style={[styles.onboardingOverlay, { backgroundColor: 'rgba(0,0,0,0.85)' }]}>
+      <View style={[styles.onboardingModal, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+        <Text style={[styles.onboardingTitle, { color: colors.text, marginBottom: 4 }]}>
+          What's New in v1.2.0
+        </Text>
+        <Text style={[styles.onboardingDescription, { color: colors.textSecondary, marginBottom: 24 }]}>
+          Here's what we've added since your last visit:
+        </Text>
+
+        {features.map((f, i) => (
+          <View key={i} style={styles.whatsNewRow}>
+            <Text style={styles.whatsNewEmoji}>{f.emoji}</Text>
+            <Text style={[styles.whatsNewText, { color: colors.text }]}>{f.text}</Text>
+          </View>
+        ))}
+
+        <Pressable
+          style={[styles.btn, { backgroundColor: colors.primary, marginTop: 24 }]}
+          onPress={onDismiss}
+        >
+          <Text style={[styles.btnText, { color: colors.primaryText }]}>Got it!</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
 // --- App UI ---
 function App() {
   const [tab, setTab] = useState("today");
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
+  const [showWhatsNew, setShowWhatsNew] = useState(false);
   const colorScheme = useColorScheme();
   const colors = getColors(colorScheme);
 
@@ -809,6 +978,13 @@ function App() {
       await runMigrations();
       const completed = await getOnboardingStatus();
       setShowOnboarding(!completed);
+      
+      // Only show What's New to existing users, not new ones
+      if (completed) {
+        const seen = await getWhatsNewSeen();
+        setShowWhatsNew(!seen);
+      }
+
       setOnboardingChecked(true);
     }
     checkOnboarding();
@@ -817,6 +993,11 @@ function App() {
   async function handleOnboardingComplete() {
     await setOnboardingCompleted();
     setShowOnboarding(false);
+  }
+
+   async function handleWhatsNewDismiss() {
+    await setWhatsNewSeen();
+    setShowWhatsNew(false);
   }
 
   // Don't render anything until onboarding status is checked
@@ -886,6 +1067,12 @@ function App() {
       {showOnboarding && (
         <OnboardingModal onComplete={handleOnboardingComplete} colors={colors} />
       )}
+
+      {/* What's New Modal */}
+      {showWhatsNew && (
+        <WhatsNewModal onDismiss={handleWhatsNewDismiss} colors={colors} />
+      )}
+
     </SafeAreaView>
   );
 }
@@ -1057,6 +1244,21 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
   },
+  whatsNewRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 14,
+    gap: 12,
+  },
+  whatsNewEmoji: {
+    fontSize: 20,
+    lineHeight: 24,
+  },
+  whatsNewText: {
+    flex: 1,
+    fontSize: 15,
+    lineHeight: 22,
+  },
   dotsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -1087,5 +1289,50 @@ const styles = StyleSheet.create({
   navButtonText: {
     fontSize: 16,
     fontWeight: '700',
+  },
+  pickerOverlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    justifyContent: 'flex-end',
+    zIndex: 999,
+  },
+  pickerSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderWidth: 1,
+    maxHeight: '75%',
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+  },
+  pickerTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  pickerClose: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  pickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  historyPickerBtn: {
+    marginTop: 8,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  historyPickerTxt: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
