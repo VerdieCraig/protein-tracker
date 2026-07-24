@@ -16,9 +16,8 @@
         "foregroundImage": "./adaptive-icon.png"
        },
       "predictiveBackGestureEnabled": false,
-      "package": "com.darklotusdev.proteintracker",
-      "versionCode": 2
-    },
+      "package": "com.darklotusdev.proteintracker"
+   },
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png"
